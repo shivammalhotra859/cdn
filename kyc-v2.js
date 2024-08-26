@@ -41,7 +41,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (isWebView() === "Yes") {
           message = "message webview";
         }
-        openModal(message, "Ok");
+        openModal(message+isWebView(), "Ok");
 
         // settingsUrl = `chrome://settings/content/siteDetails?site=${window.location.origin}`;
         // settingsUrl = `chrome://settings/content/siteDetails?site=http://127.0.0.1:5501`;
