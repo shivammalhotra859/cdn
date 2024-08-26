@@ -211,6 +211,9 @@ const isWebView = () => {
 
   const osText = isIos ? "iOS" : isAndroid ? "Android" : "Other";
   const webviewText = isWebview ? "Yes" : "No";
+  
 
   console.log(`OS: ${osText}, Webview: ${webviewText}`);
+
+  return webviewText;
 };
