@@ -42,22 +42,25 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           message = "message webview";
         }
         openModal(message+isWebView(), "Ok");
+        
 
         // settingsUrl = `chrome://settings/content/siteDetails?site=${window.location.origin}`;
         // settingsUrl = `chrome://settings/content/siteDetails?site=http://127.0.0.1:5501`;
         // window.location.href = settingsUrl;
       } else {
-        console.error(
-          "An error occurred while trying to access the camera:",
-          error
-        );
+        // console.error(
+        //   "An error occurred while trying to access the camera:",
+        //   error
+        // );
+        openModal("An error occurred while trying to access the camera:"+isWebView(), "Ok");
       }
       //changeEnd--------------------------------
 
       // errorMessage.textContent = `Error accessing the camera: ${error.name}`;
     });
 } else {
-  errorMessage.textContent = "Camera not available on this device.";
+  // errorMessage.textContent = "Camera not available on this device.";
+  openModal("Camera not available on this device."+isWebView(), "Ok");
 }
 
 // Take a snapshot
