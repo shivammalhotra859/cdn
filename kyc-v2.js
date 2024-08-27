@@ -55,7 +55,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         openModal("An error occurred while trying to access the camera:"+isWebView(), "Ok");
       }
       //changeEnd--------------------------------
-
+openModal("An error occurred while trying to access the camera:00000"+isWebView(), "Ok");
       // errorMessage.textContent = `Error accessing the camera: ${error.name}`;
     });
 } else {
