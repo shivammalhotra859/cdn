@@ -86,7 +86,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 } else {
   //   errorMessage.textContent = "Camera not available on this device.";
   // changeStart-----------------------------
-  openModal("Camera not available on this device.", "Ok");
+  openModal("Camera not supported on this device.", "Ok");
   //changeEnd--------------------------------
 }
 
@@ -94,10 +94,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 takePictureButton.addEventListener("click", async function (e) {
   e.preventDefault();
   console.log("cameraPermissionStatus", cameraPermissionStatus);
-  //   try {
-  //     const result = await navigator.permissions.query({ name: "camera" });
-
-  //     // console.log("result>>", result);
 
   if (cameraPermissionStatus === "") {
     closeCamera.style.display = "block";
@@ -120,10 +116,9 @@ takePictureButton.addEventListener("click", async function (e) {
       openModal(msg_browser_1, "Ok");
     }
     //changeEnd--------------------------------
+  } else {
+    openModal(msg_common_1, "Ok");
   }
-  //   } catch (error) {
-  //     openModal(`Camera (not supported)`, "Ok");
-  //   }
 });
 // Take a snapshot
 
@@ -161,20 +156,14 @@ const openModal = (message, buttonText) => {
 };
 
 async function handleFormSubmission(ev) {
-  console.log("cameraPermissionStatus", cameraPermissionStatus);
   //  prevent default nature of form
   ev.preventDefault();
-  //   try {
-  //     const result = await navigator.permissions.query({ name: "camera" });
-
-  // console.log("result>>", result);
-
   if (cameraPermissionStatus === "") {
     proceedBtn.disabled = true;
     //   get image data
     let sfv = $("#selfieImg").val();
     //   get form submitUrl
-    let submitUrl = $("#submitUrl").val() || "sssss";
+    let submitUrl = $("#submitUrl").val();
 
     //   if image data is empty open modal and display error message to user and exit
     if (sfv.trim() === "") {
@@ -228,10 +217,9 @@ async function handleFormSubmission(ev) {
       openModal(msg_browser_1, "Ok");
     }
     //changeEnd--------------------------------
+  } else {
+    openModal(msg_common_1, "Ok");
   }
-  //   } catch (error) {
-  //     openModal(`Camera (not supported)`, "Ok");
-  //   }
 }
 
 const displayLoader = () => {
@@ -254,4 +242,3 @@ function extractFirstValueFromJson(jsonString) {
     return undefined;
   }
 }
-console.log("cameraPermissionStatus", cameraPermissionStatus);
