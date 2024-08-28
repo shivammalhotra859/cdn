@@ -1,3 +1,7 @@
+let cameraPermissionStatus = "";
+const permissionNameEnum = {
+  NotAllowedError: "NotAllowedError",
+};
 let cameraOpen = false;
 const cameraView = document.getElementById("camera-view");
 const takePictureButton = document.getElementById("take-picture");
@@ -62,8 +66,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     .catch(function (error) {
       //   errorMessage.textContent = `Error accessing the camera: ${error.name}`;
       // changeStart-----------------------------
+      cameraPermissionStatus = error.name;
       let message = "";
-      if (error.name === "NotAllowedError") {
+      if (error.name === permissionNameEnum.NotAllowedError) {
         message = msg_browser_1;
         if (isWebView() === "Yes") {
           message = msg_webview_1;
@@ -88,37 +93,37 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 // Take a snapshot
 takePictureButton.addEventListener("click", async function (e) {
   e.preventDefault();
+  console.log("cameraPermissionStatus", cameraPermissionStatus);
+  //   try {
+  //     const result = await navigator.permissions.query({ name: "camera" });
 
-  try {
-    const result = await navigator.permissions.query({ name: "camera" });
+  //     // console.log("result>>", result);
 
-    // console.log("result>>", result);
-
-    if (result.state === "granted") {
-      closeCamera.style.display = "block";
-      proceedBtn.style.display = "inline-block";
-      cameraView.style.display = "none";
-      takePictureButton.style.display = "none";
-      canvas
-        .getContext("2d")
-        .drawImage(cameraView, 0, 0, canvas.width, canvas.height);
-      let image_data_url = canvas.toDataURL("image/jpeg");
-      snapshot.src = image_data_url;
-      snapshot.style.display = "block";
-      imgUrlInput.value = image_data_url;
-      console.log(image_data_url);
-    } else if (result.state === "denied") {
-      // changeStart-----------------------------
-      if (isWebView() === "Yes") {
-        openModal(msg_webview_1, "Ok");
-      } else {
-        openModal(msg_browser_1, "Ok");
-      }
-      //changeEnd--------------------------------
+  if (cameraPermissionStatus === "") {
+    closeCamera.style.display = "block";
+    proceedBtn.style.display = "inline-block";
+    cameraView.style.display = "none";
+    takePictureButton.style.display = "none";
+    canvas
+      .getContext("2d")
+      .drawImage(cameraView, 0, 0, canvas.width, canvas.height);
+    let image_data_url = canvas.toDataURL("image/jpeg");
+    snapshot.src = image_data_url;
+    snapshot.style.display = "block";
+    imgUrlInput.value = image_data_url;
+    console.log(image_data_url);
+  } else if (cameraPermissionStatus === permissionNameEnum.NotAllowedError) {
+    // changeStart-----------------------------
+    if (isWebView() === "Yes") {
+      openModal(msg_webview_1, "Ok");
+    } else {
+      openModal(msg_browser_1, "Ok");
     }
-  } catch (error) {
-    openModal(`Camera (not supported)`, "Ok");
+    //changeEnd--------------------------------
   }
+  //   } catch (error) {
+  //     openModal(`Camera (not supported)`, "Ok");
+  //   }
 });
 // Take a snapshot
 
@@ -156,76 +161,77 @@ const openModal = (message, buttonText) => {
 };
 
 async function handleFormSubmission(ev) {
+  console.log("cameraPermissionStatus", cameraPermissionStatus);
   //  prevent default nature of form
   ev.preventDefault();
-  try {
-    const result = await navigator.permissions.query({ name: "camera" });
+  //   try {
+  //     const result = await navigator.permissions.query({ name: "camera" });
 
-    // console.log("result>>", result);
+  // console.log("result>>", result);
 
-    if (result.state === "granted") {
-      proceedBtn.disabled = true;
-      //   get image data
-      let sfv = $("#selfieImg").val();
-      //   get form submitUrl
-      let submitUrl = $("#submitUrl").val() || "sssss";
+  if (cameraPermissionStatus === "") {
+    proceedBtn.disabled = true;
+    //   get image data
+    let sfv = $("#selfieImg").val();
+    //   get form submitUrl
+    let submitUrl = $("#submitUrl").val() || "sssss";
 
-      //   if image data is empty open modal and display error message to user and exit
-      if (sfv.trim() === "") {
-        openModal(
-          "Photo not valid. Please take a clear photo with face in center.",
-          "Retake"
-        );
-        proceedBtn.disabled = false;
-        return;
-      }
-
-      //   if we have both post url and image data then make a post request to given post url
-      if (submitUrl && sfv) {
-        let reqData = { selfieImg: sfv };
-        displayLoader();
-        $.ajax({
-          url: submitUrl,
-          type: "POST",
-          data: JSON.stringify(reqData),
-          dataType: "json",
-          contentType: "application/json",
-          success: function (response) {
-            hideLoader();
-            proceedBtn.disabled = false;
-            if (response.data && response.data.redirectUrl) {
-              window.location.href = response.data.redirectUrl;
-            } else {
-              openModal(response.message, "Ok");
-            }
-          },
-          error: function (xhr, status, error) {
-            hideLoader();
-            proceedBtn.disabled = false;
-            console.log(
-              " xhr.responseText: " +
-                xhr.responseText +
-                " //status: " +
-                status +
-                " //Error: " +
-                error
-            );
-            openModal(extractFirstValueFromJson(xhr.responseText), "Ok");
-          },
-        });
-      }
-    } else if (result.state === "denied") {
-      // changeStart-----------------------------
-      if (isWebView() === "Yes") {
-        openModal(msg_webview_1, "Ok");
-      } else {
-        openModal(msg_browser_1, "Ok");
-      }
-      //changeEnd--------------------------------
+    //   if image data is empty open modal and display error message to user and exit
+    if (sfv.trim() === "") {
+      openModal(
+        "Photo not valid. Please take a clear photo with face in center.",
+        "Retake"
+      );
+      proceedBtn.disabled = false;
+      return;
     }
-  } catch (error) {
-    openModal(`Camera (not supported)`, "Ok");
+
+    //   if we have both post url and image data then make a post request to given post url
+    if (submitUrl && sfv) {
+      let reqData = { selfieImg: sfv };
+      displayLoader();
+      $.ajax({
+        url: submitUrl,
+        type: "POST",
+        data: JSON.stringify(reqData),
+        dataType: "json",
+        contentType: "application/json",
+        success: function (response) {
+          hideLoader();
+          proceedBtn.disabled = false;
+          if (response.data && response.data.redirectUrl) {
+            window.location.href = response.data.redirectUrl;
+          } else {
+            openModal(response.message, "Ok");
+          }
+        },
+        error: function (xhr, status, error) {
+          hideLoader();
+          proceedBtn.disabled = false;
+          console.log(
+            " xhr.responseText: " +
+              xhr.responseText +
+              " //status: " +
+              status +
+              " //Error: " +
+              error
+          );
+          openModal(extractFirstValueFromJson(xhr.responseText), "Ok");
+        },
+      });
+    }
+  } else if (cameraPermissionStatus === permissionNameEnum.NotAllowedError) {
+    // changeStart-----------------------------
+    if (isWebView() === "Yes") {
+      openModal(msg_webview_1, "Ok");
+    } else {
+      openModal(msg_browser_1, "Ok");
+    }
+    //changeEnd--------------------------------
   }
+  //   } catch (error) {
+  //     openModal(`Camera (not supported)`, "Ok");
+  //   }
 }
 
 const displayLoader = () => {
@@ -248,3 +254,4 @@ function extractFirstValueFromJson(jsonString) {
     return undefined;
   }
 }
+console.log("cameraPermissionStatus", cameraPermissionStatus);
