@@ -28,39 +28,29 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       takePictureButton.style.display = "inline-block";
     })
     .catch(function (error) {
-      // changeStart-----------------------------
-      // Permission denied or an error occurred
+       // changeStart-----------------------------
+      let message = "";
       if (error.name === "NotAllowedError") {
-        let message =
+        message =
           "Camera access was denied. Please enable it in your browser settings.";
-        // alert(
-        //   "Camera access was denied. Please enable it in your browser settings."
-        // );
-        // window.location.reload();
-
         if (isWebView() === "Yes") {
-          message = "message webview";
+          message = "Application requires your permission to access camera";
+          openModal(message, "Ok");
+        } else {
+          openModal(message, "Ok");
         }
-        openModal(message+isWebView(), "Ok");
-        
-
-        // settingsUrl = `chrome://settings/content/siteDetails?site=${window.location.origin}`;
-        // settingsUrl = `chrome://settings/content/siteDetails?site=http://127.0.0.1:5501`;
-        // window.location.href = settingsUrl;
       } else {
-        // console.error(
-        //   "An error occurred while trying to access the camera:",
-        //   error
-        // );
-        openModal("An error occurred while trying to access the camera:"+isWebView(), "Ok");
+        message = `Error accessing the camera: ${error.name}`;
+        openModal(message, "Ok");
+        console.log(`Error accessing the camera:`, error);
       }
       //changeEnd--------------------------------
-openModal("An error occurred while trying to access the camera:00000"+isWebView(), "Ok");
-      // errorMessage.textContent = `Error accessing the camera: ${error.name}`;
     });
 } else {
-  // errorMessage.textContent = "Camera not available on this device.";
-  openModal("Camera not available on this device."+isWebView(), "Ok");
+  // changeStart-----------------------------
+  message = "Camera not available on this device.";
+  openModal(message, "Ok");
+  //changeEnd--------------------------------
 }
 
 // Take a snapshot
