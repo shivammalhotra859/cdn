@@ -8,6 +8,38 @@ const closeCamera = document.getElementById("close-camera");
 const proceedBtn = document.getElementById("submitImgButton");
 const imgUrlInput = document.getElementById("selfieImg");
 
+// changeStart-----------------------------
+const msg_browser_1 =
+  "Camera access was denied. Please enable it in your browser settings.";
+const msg_webview_1 = "Application requires your permission to access camera";
+const msg_common_1 = "Error accessing the camera:";
+const isWebView = () => {
+  let $userAgent = document.getElementById("user-agent");
+  let $userAgentInfo = document.getElementById("user-agent-info");
+
+  const navigator = window.navigator;
+  const userAgent = navigator.userAgent;
+  const normalizedUserAgent = userAgent.toLowerCase();
+  const standalone = navigator.standalone;
+
+  const isIos =
+    /ip(ad|hone|od)/.test(normalizedUserAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /android/.test(normalizedUserAgent);
+  const isSafari = /safari/.test(normalizedUserAgent);
+  const isWebview =
+    (isAndroid && /; wv\)/.test(normalizedUserAgent)) ||
+    (isIos && !standalone && !isSafari);
+
+  const osText = isIos ? "iOS" : isAndroid ? "Android" : "Other";
+  const webviewText = isWebview ? "Yes" : "No";
+
+  //   console.log(`OS: ${osText}, Webview: ${webviewText}`);
+
+  return webviewText;
+};
+
+//changeEnd--------------------------------
 // Check for camera access
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   navigator.mediaDevices
@@ -28,55 +60,65 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       takePictureButton.style.display = "inline-block";
     })
     .catch(function (error) {
-       // changeStart-----------------------------
+      //   errorMessage.textContent = `Error accessing the camera: ${error.name}`;
+      // changeStart-----------------------------
       let message = "";
       if (error.name === "NotAllowedError") {
-        message =
-          "Camera access was denied. Please enable it in your browser settings.";
+        message = msg_browser_1;
         if (isWebView() === "Yes") {
-          message = "Application requires your permission to access camera";
+          message = msg_webview_1;
           openModal(message, "Ok");
         } else {
           openModal(message, "Ok");
         }
       } else {
-        message = `Error accessing the camera: ${error.name}`;
+        message = `${msg_common_1} ${error.name}`;
         openModal(message, "Ok");
-        console.log(`Error accessing the camera:`, error);
+        console.log(msg_common_1, error);
       }
       //changeEnd--------------------------------
     });
 } else {
+  //   errorMessage.textContent = "Camera not available on this device.";
   // changeStart-----------------------------
-  message = "Camera not available on this device.";
-  openModal(message, "Ok");
+  openModal("Camera not available on this device.", "Ok");
   //changeEnd--------------------------------
 }
 
 // Take a snapshot
-takePictureButton.addEventListener("click", function (e) {
+takePictureButton.addEventListener("click", async function (e) {
   e.preventDefault();
-  // debugger
-  closeCamera.style.display = "block";
-  proceedBtn.style.display = "inline-block";
-  cameraView.style.display = "none";
-  takePictureButton.style.display = "none";
-  canvas
-    .getContext("2d")
-    .drawImage(cameraView, 0, 0, canvas.width, canvas.height);
-  let image_data_url = canvas.toDataURL("image/jpeg");
-  snapshot.src = image_data_url;
-  // vedioArea.style.display = 'none';
-  snapshot.style.display = "block";
-  // data url of the image
-  imgUrlInput.value = image_data_url;
-  console.log(image_data_url);
 
-  // debugger
-  // const context = cameraView.getContext('2d');
-  // context.drawImage(cameraView, 0, 0, cameraContainer.offsetWidth, cameraContainer.offsetHeight);
-  // snapshot.src = cameraView.toDataURL('image/png');
-  // snapshot.style.display = 'block';
+  try {
+    const result = await navigator.permissions.query({ name: "camera" });
+
+    // console.log("result>>", result);
+
+    if (result.state === "granted") {
+      closeCamera.style.display = "block";
+      proceedBtn.style.display = "inline-block";
+      cameraView.style.display = "none";
+      takePictureButton.style.display = "none";
+      canvas
+        .getContext("2d")
+        .drawImage(cameraView, 0, 0, canvas.width, canvas.height);
+      let image_data_url = canvas.toDataURL("image/jpeg");
+      snapshot.src = image_data_url;
+      snapshot.style.display = "block";
+      imgUrlInput.value = image_data_url;
+      console.log(image_data_url);
+    } else if (result.state === "denied") {
+      // changeStart-----------------------------
+      if (isWebView() === "Yes") {
+        openModal(msg_webview_1, "Ok");
+      } else {
+        openModal(msg_browser_1, "Ok");
+      }
+      //changeEnd--------------------------------
+    }
+  } catch (error) {
+    openModal(`Camera (not supported)`, "Ok");
+  }
 });
 // Take a snapshot
 
@@ -113,54 +155,77 @@ const openModal = (message, buttonText) => {
   $("#ex1").modal();
 };
 
-function handleFormSubmission() {
-  $("#adhrForm").on("submit", function (ev) {
-    ev.preventDefault();
-    let sfv = $("#selfieImg").val();
-    if (sfv.trim() === "") {
-      openModal(
-        "Photo not valid. Please take a clear photo with face in center.",
-        "Retake"
-      );
-      return;
-    }
-    let base64image = this[1].value;
-    console.log(base64image);
-    const sf = $("form").serialize();
-    let formId = $("#formId").val();
-    let submitUrl = $("#submitUrl").val();
+async function handleFormSubmission(ev) {
+  //  prevent default nature of form
+  ev.preventDefault();
+  try {
+    const result = await navigator.permissions.query({ name: "camera" });
 
-    console.log(sf);
-    let reqData = { selfieImg: sfv };
-    displayLoader();
-    $.ajax({
-      url: submitUrl,
-      type: "POST",
-      data: JSON.stringify(reqData),
-      dataType: "json",
-      contentType: "application/json",
-      success: function (response) {
-        hideLoader();
-        if (response.data && response.data.redirectUrl) {
-          window.location.href = response.data.redirectUrl;
-        } else {
-          openModal(response.message, "Ok");
-        }
-      },
-      error: function (xhr, status, error) {
-        hideLoader();
-        console.log(
-          " xhr.responseText: " +
-            xhr.responseText +
-            " //status: " +
-            status +
-            " //Error: " +
-            error
+    // console.log("result>>", result);
+
+    if (result.state === "granted") {
+      proceedBtn.disabled = true;
+      //   get image data
+      let sfv = $("#selfieImg").val();
+      //   get form submitUrl
+      let submitUrl = $("#submitUrl").val() || "sssss";
+
+      //   if image data is empty open modal and display error message to user and exit
+      if (sfv.trim() === "") {
+        openModal(
+          "Photo not valid. Please take a clear photo with face in center.",
+          "Retake"
         );
-        openModal(extractFirstValueFromJson(xhr.responseText), "Ok");
-      },
-    });
-  });
+        proceedBtn.disabled = false;
+        return;
+      }
+
+      //   if we have both post url and image data then make a post request to given post url
+      if (submitUrl && sfv) {
+        let reqData = { selfieImg: sfv };
+        displayLoader();
+        $.ajax({
+          url: submitUrl,
+          type: "POST",
+          data: JSON.stringify(reqData),
+          dataType: "json",
+          contentType: "application/json",
+          success: function (response) {
+            hideLoader();
+            proceedBtn.disabled = false;
+            if (response.data && response.data.redirectUrl) {
+              window.location.href = response.data.redirectUrl;
+            } else {
+              openModal(response.message, "Ok");
+            }
+          },
+          error: function (xhr, status, error) {
+            hideLoader();
+            proceedBtn.disabled = false;
+            console.log(
+              " xhr.responseText: " +
+                xhr.responseText +
+                " //status: " +
+                status +
+                " //Error: " +
+                error
+            );
+            openModal(extractFirstValueFromJson(xhr.responseText), "Ok");
+          },
+        });
+      }
+    } else if (result.state === "denied") {
+      // changeStart-----------------------------
+      if (isWebView() === "Yes") {
+        openModal(msg_webview_1, "Ok");
+      } else {
+        openModal(msg_browser_1, "Ok");
+      }
+      //changeEnd--------------------------------
+    }
+  } catch (error) {
+    openModal(`Camera (not supported)`, "Ok");
+  }
 }
 
 const displayLoader = () => {
@@ -183,30 +248,3 @@ function extractFirstValueFromJson(jsonString) {
     return undefined;
   }
 }
-
-const isWebView = () => {
-  let $userAgent = document.getElementById("user-agent");
-  let $userAgentInfo = document.getElementById("user-agent-info");
-
-  const navigator = window.navigator;
-  const userAgent = navigator.userAgent;
-  const normalizedUserAgent = userAgent.toLowerCase();
-  const standalone = navigator.standalone;
-
-  const isIos =
-    /ip(ad|hone|od)/.test(normalizedUserAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const isAndroid = /android/.test(normalizedUserAgent);
-  const isSafari = /safari/.test(normalizedUserAgent);
-  const isWebview =
-    (isAndroid && /; wv\)/.test(normalizedUserAgent)) ||
-    (isIos && !standalone && !isSafari);
-
-  const osText = isIos ? "iOS" : isAndroid ? "Android" : "Other";
-  const webviewText = isWebview ? "Yes" : "No";
-  
-
-  console.log(`OS: ${osText}, Webview: ${webviewText}`);
-
-  return webviewText;
-};
