@@ -49,17 +49,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   navigator.mediaDevices
     .getUserMedia({ video: true })
     .then(function (stream) {
-      cameraView.srcObject = stream;
+      //older browser support
+      if ("srcObject" in cameraView) {
+        cameraView.srcObject = stream;
+      } else {
+        cameraView.src = window.URL.createObjectURL(stream);
+      }
 
       cameraView.play();
-      // //older browser support
-      // if ("srcObject" in cameraView) {
-      //     cameraView.srcObject = stream;
 
-      // } else {
-      //     cameraView.src = window.URL.createObjectURL(stream);
-
-      // }
       vedioArea.style.display = "block";
       takePictureButton.style.display = "inline-block";
     })
